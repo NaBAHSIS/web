@@ -1,0 +1,676 @@
+<?php
+         /*   header("Content-type: application/octet-stream");
+			header('Content-Type: text/csv');
+			header("Content-Disposition: attachment; filename=table4_".date('d')."_".date('m')."_".date('Y')."_".date('H')."_".date('i')."_".date('s').".csv");
+			header("Pragma: no-cache");
+			header("Expires: 0"); */
+
+include_once('../../../../wp-config.php');
+include_once('../../../../wp-load.php');
+include_once('../../../../wp-includes/wp-db.php');
+include ('../../../../wp-load.php');
+
+	     
+ global $wpdb;
+ global $current_user;
+ $filtr= $_POST['filtre']; 
+ $filtr='3333-111111';  
+
+/* ************************************************************************************************************************************/
+/*															Création des table  4 s'il n'existe pas!
+/* ************************************************************************************************************************************/
+	
+			global $jal_db_version;
+	       $jal_db_version = '1.0';
+           jal_install();
+		
+ 
+			function jal_install() {
+				global $wpdb;
+				global $jal_db_version; 
+
+				$table_name1 =  'table4';
+				
+                       
+       					   
+				$charset_collate = $wpdb->get_charset_collate();
+				
+	 
+				$sql = "CREATE TABLE IF NOT EXISTS $table_name1 (
+					    `num_portefeuille` varchar(11),`nom_client` varchar(6),`Prenom_client` varchar(7), ";
+											
+                for($i=1;$i<=10;$i++){
+					$suite1.="`ETF_name_sold_".$i."` varchar(20), `ETF_code_sold_".$i."` varchar(20), `ETF_%_sold_".$i."` varchar(20), ";
+					$suite4.="`ETF_name_buy_".$i."` varchar(20), `ETF_code_buy_".$i."`  varchar(20), `ETF_%_buy_".$i."` varchar(20), ";
+		        }                
+				$sql .=$suite1.$suite4." `jour` varchar(10), `mois` varchar(10), `annee` varchar(20), PRIMARY KEY (`num_portefeuille`)) $charset_collate" ;
+                              
+                                 
+				require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+				
+				dbDelta( $sql );
+              
+				add_option( 'jal_db_version', $jal_db_version );
+			}		
+
+			
+/* ************************************************************************************************************************************/
+/*															Création du compte rendu
+/* ************************************************************************************************************************************/
+		
+		$date=date('Y-m-d');
+				
+		//$sites = realpath(dirname(__FILE__)).'/';
+		 $sites='./';
+		 $newfile = $sites."Compte_rendu.txt";
+		 if (file_exists($newfile)) {
+			     
+				  $fh = fopen($newfile, 'wb');
+				  
+				  $newfile="\xEF\xBB\xBF".$newfile;
+				  fwrite($fh, '****************************************************************** '.PHP_EOL);
+				  fwrite($fh, ' Compte rendu de portfeuilles : le '.date('d-m-Y H:i:s').PHP_EOL);
+				  fwrite($fh, '******************************************************************'.PHP_EOL);
+				  fwrite($fh, '																			'.PHP_EOL);
+				} else {
+				  
+				  $fh = fopen($newfile, 'wb');
+				  $newfile="\xEF\xBB\xBF".$newfile;
+				  fwrite($fh, '********************************************************************** '.PHP_EOL);
+				  fwrite($fh, ' Compte rendu de portfeuilles : le '.date('d-m-Y H:i:s').PHP_EOL);
+				  fwrite($fh, '**********************************************************************'.PHP_EOL);
+				  fwrite($fh, '																			'.PHP_EOL);
+				}
+			
+
+/* ************************************************************************************************************************************/
+/*															Comparaison de portfeuilles
+/* ************************************************************************************************************************************/			
+	            $tranch=explode('-',$date);
+				$day=$tranch[2];
+				$mounth=$tranch[1];
+				$year=$tranch[0];
+	
+	//vider la table4 
+	
+	$delete = $wpdb->query(" TRUNCATE TABLE `table4`");
+
+	if(isset($filtr) && !empty($filtr))
+	{		
+					
+	
+		$portfeuille=$filtr;
+		
+		$results=$wpdb->get_results("SELECT * FROM `table2` WHERE  `NUM_PORTEFEUILLES` = '".$portfeuille."'");
+		
+		$count=0;
+		foreach  ($results as $row) {
+
+				
+				$profil_d_risque= $row->PROFIL;
+				$nom= $row->Nom_client;
+				$prenom= $row->Prenom_client; 
+				
+				
+			/* ********************************************************************************************/
+			/*			Pour chaque Code ETF de la table 1, vérifier sa présence dans la table 3
+			/* *********************************************************************************************/
+				$reqq=" SELECT `POLICY NUMBER`,`FUND NAME`, tab1.`FUND ISIN`, tab1.`POIDS`  FROM `table1` as tab1  WHERE tab1.`POLICY NUMBER`='".$portfeuille."' ";
+				$compare=$wpdb->get_results($reqq); 
+				
+				if(Count($compare) ==0){
+				
+					
+					$insertREq="INSERT INTO `table4`(`num_portefeuille`, `nom_client`, `Prenom_client`, `ETF_name_sold_1`, `ETF_code_sold_1`,  `ETF_%_sold_1`,  `ETF_name_sold_2`, `ETF_code_sold_2`, `ETF_%_sold_2`,  `ETF_name_sold_3`, `ETF_code_sold_3`, `ETF_%_sold_3`,  `ETF_name_sold_4`,  `ETF_code_sold_4`, `ETF_%_sold_4`,  `ETF_name_sold_5`,`ETF_code_sold_5`, `ETF_%_sold_5`,   `ETF_name_sold_6`,  `ETF_code_sold_6`,  `ETF_%_sold_6`,  `ETF_name_sold_7`, `ETF_code_sold_7`, `ETF_%_sold_7`,  `ETF_name_sold_8`, `ETF_code_sold_8`,  `ETF_%_sold_8`, `ETF_name_sold_9`, `ETF_code_sold_9`,  `ETF_%_sold_9`,  `ETF_name_sold_10`, `ETF_code_sold_10`, `ETF_%_sold_10`, `ETF_name_buy_1`, `ETF_code_buy_1`,  `ETF_%_buy_1`,  `ETF_name_buy_2`,  `ETF_code_buy_2`,  `ETF_%_buy_2`,  `ETF_name_buy_3`,  `ETF_code_buy_3`,  `ETF_%_buy_3`, `ETF_name_buy_4`,  `ETF_code_buy_4`,  `ETF_%_buy_4`,  `ETF_name_buy_5`,  `ETF_code_buy_5`, `ETF_%_buy_5`,   `ETF_name_buy_6`,  `ETF_code_buy_6`, `ETF_%_buy_6`,  `ETF_name_buy_7`,  `ETF_code_buy_7`,  `ETF_%_buy_7`,  `ETF_name_buy_8`,  `ETF_code_buy_8`,  `ETF_%_buy_8`,  `ETF_name_buy_9`,  `ETF_code_buy_9`,  `ETF_%_buy_9`, `ETF_name_buy_10`, `ETF_code_buy_10`, `ETF_%_buy_10`, `jour`, `mois`, `annee`) VALUES ('".$portfeuille."','".$nom."','".$prenom."','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','$day','$mounth','$year')"; 
+
+					 $tmp_result = $wpdb->query($insertREq); 
+					
+				
+						fwrite($fh, '  - Anomalie : client '.$nom.' introuvable dans fichier client. '.PHP_EOL);
+						fwrite($fh, ' 																			 '.PHP_EOL); 
+						fwrite($fh, '  - Anomalie : Profil 5 du client '.$nom.' introuvable dans le fichier Portefeuilles Modèles. '.PHP_EOL);
+						fwrite($fh, ' 																			 '.PHP_EOL); 
+				}
+				else{
+					
+			
+					
+					  $insertREq="INSERT INTO `table4`(`num_portefeuille`, `nom_client`, `Prenom_client`, `ETF_name_sold_1`, `ETF_code_sold_1`,  `ETF_%_sold_1`,  `ETF_name_sold_2`, `ETF_code_sold_2`, `ETF_%_sold_2`,  `ETF_name_sold_3`, `ETF_code_sold_3`, `ETF_%_sold_3`,  `ETF_name_sold_4`,  `ETF_code_sold_4`, `ETF_%_sold_4`,  `ETF_name_sold_5`,`ETF_code_sold_5`, `ETF_%_sold_5`,   `ETF_name_sold_6`,  `ETF_code_sold_6`,  `ETF_%_sold_6`,  `ETF_name_sold_7`, `ETF_code_sold_7`, `ETF_%_sold_7`,  `ETF_name_sold_8`, `ETF_code_sold_8`,  `ETF_%_sold_8`, `ETF_name_sold_9`, `ETF_code_sold_9`,  `ETF_%_sold_9`,  `ETF_name_sold_10`, `ETF_code_sold_10`, `ETF_%_sold_10`, `ETF_name_buy_1`, `ETF_code_buy_1`,  `ETF_%_buy_1`,  `ETF_name_buy_2`,  `ETF_code_buy_2`,  `ETF_%_buy_2`,  `ETF_name_buy_3`,  `ETF_code_buy_3`,  `ETF_%_buy_3`, `ETF_name_buy_4`,  `ETF_code_buy_4`,  `ETF_%_buy_4`,  `ETF_name_buy_5`,  `ETF_code_buy_5`, `ETF_%_buy_5`,   `ETF_name_buy_6`,  `ETF_code_buy_6`, `ETF_%_buy_6`,  `ETF_name_buy_7`,  `ETF_code_buy_7`,  `ETF_%_buy_7`,  `ETF_name_buy_8`,  `ETF_code_buy_8`,  `ETF_%_buy_8`,  `ETF_name_buy_9`,  `ETF_code_buy_9`,  `ETF_%_buy_9`, `ETF_name_buy_10`, `ETF_code_buy_10`, `ETF_%_buy_10`, `jour`, `mois`, `annee`) VALUES ('".$portfeuille."','".$nom."','".$prenom."','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','$day','$mounth','$year')";
+					  $tmp_result = $wpdb->query($insertREq); 
+					
+					
+					 fwrite($fh, '  - Client '.$nom.'  traité. '.PHP_EOL); 
+					 fwrite($fh, ' 																			 '.PHP_EOL); 
+					 
+					
+					foreach  ($compare as $col) {
+						$col=(array)$col;
+						$etf= $col['FUND NAME'];
+						$code=$col['FUND ISIN'];
+						$tab1poid= $col['POIDS']; 
+						$count++;
+												
+						
+						$reqcomp=" SELECT  `PROFIL`, `LIBELLE`, tab3.`FUND ISIN` as tab3ISIN, tab3.`POIDS` as tab3Poids  FROM `table3` as tab3  WHERE tab3.`LIBELLE` ='".$etf."' AND tab3.`PROFIL` ='".$profil_d_risque."' ";
+						
+						$comprslt=$wpdb->get_results($reqcomp);
+						 
+						 
+						 if( Count($comprslt) ==0){
+							
+							//etf not exist on table 3
+							///$update_buy_name_REq="UPDATE `table4` SET `ETF_name_sold_1`='".$etf."',`ETF_name_sold_2`='".$etf."',`ETF_name_sold_3`='".$etf."',`ETF_name_sold_4`='".$etf."',`ETF_name_sold_5`='".$etf."',`ETF_name_sold_6`='".$etf."',`ETF_name_sold_7`='".$etf."',`ETF_name_sold_8`='".$etf."',`ETF_name_sold_9`='".$etf."',`ETF_name_sold_10`='".$etf."',`ETF_code_sold_1`='".$code."',`ETF_code_sold_2`='".$code."',`ETF_code_sold_3`='".$code."',`ETF_code_sold_4`='".$code."',`ETF_code_sold_5`='".$code."',`ETF_code_sold_6`='".$code."',`ETF_code_sold_7`='".$code."',`ETF_code_sold_8`='".$code."',`ETF_code_sold_9`='".$code."',`ETF_code_sold_10`='".$code."',`ETF_%_sold_1`='100',`ETF_%_sold_2`='100',`ETF_%_sold_3`='100',`ETF_%_sold_4`='100',`ETF_%_sold_5`='100',`ETF_%_sold_6`='100',`ETF_%_sold_7`='100',`ETF_%_sold_8`='100',`ETF_%_sold_9`='100',`ETF_%_sold_10`='100'  WHERE `num_portefeuille`='".$portfeuille."'";
+						    $update_buy_name_REq="UPDATE `table4` SET `ETF_name_sold_$count`='".$etf."',`ETF_code_sold_$count`='".$code."',`ETF_%_sold_$count`='100' WHERE `num_portefeuille`='".$portfeuille."'";
+							$uprslt=$wpdb->query($update_buy_name_REq); 
+							
+							} 
+							else{
+									foreach  ($comprslt as $rslt) {
+										
+										$tab3poid=$rslt->tab3Poids;
+									
+										if($tab1poid >$tab3poid){
+											$ETF_sold_i =100*(1-(intval($tab3poid)/intval($tab1poid)));
+											
+											if($ETF_sold_i>=20)
+											{// il faut vendre 
+												// remplir les champs ETF_%_sold_i
+												//$update_sld_REq=" UPDATE `table4` SET `ETF_name_sold_1`='".$etf."',`ETF_name_sold_2`='".$etf."',`ETF_name_sold_3`='".$etf."',`ETF_name_sold_4`='".$etf."',`ETF_name_sold_5`='".$etf."',`ETF_name_sold_6`='".$etf."',`ETF_name_sold_7`='".$etf."',`ETF_name_sold_8`='".$etf."',`ETF_name_sold_9`='".$etf."',`ETF_name_sold_10`='".$etf."',`ETF_code_sold_1`='".$code."',`ETF_code_sold_2`='".$code."',`ETF_code_sold_3`='".$code."',`ETF_code_sold_4`='".$code."',`ETF_code_sold_5`='".$code."',`ETF_code_sold_6`='".$code."',`ETF_code_sold_7`='".$code."',`ETF_code_sold_8`='".$code."',`ETF_code_sold_9`='".$code."',`ETF_code_sold_10`='".$code."', `ETF_%_sold_1`='".$ETF_sold_i."',`ETF_%_sold_2`='".$ETF_sold_i."',`ETF_%_sold_3`='".$ETF_sold_i."',`ETF_%_sold_4`='".$ETF_sold_i."',`ETF_%_sold_5`='".$ETF_sold_i."',`ETF_%_sold_6`='".$ETF_sold_i."',`ETF_%_sold_7`='".$ETF_sold_i."',`ETF_%_sold_8`='".$ETF_sold_i."',`ETF_%_sold_9`='".$ETF_sold_i."',`ETF_%_sold_10`='".$ETF_sold_i."' WHERE  `num_portefeuille`='".$portfeuille."'";
+												 $update_sld_REq="UPDATE `table4` SET `ETF_name_sold_$count`='".$etf."',`ETF_code_sold_$count`='".$code."',`ETF_%_sold_$count`='".$ETF_sold_i."' WHERE `num_portefeuille`='".$portfeuille."'";
+												$up_sld_rslt=$wpdb->query($update_sld_REq); 
+										
+											}
+											else{
+												
+												//$update_sld_REq=" UPDATE `table4` SET `ETF_name_sold_1`='',`ETF_name_sold_2`='',`ETF_name_sold_3`='',`ETF_name_sold_4`='',`ETF_name_sold_5`='',`ETF_name_sold_6`='',`ETF_name_sold_7`='',`ETF_name_sold_8`='',`ETF_name_sold_9`='',`ETF_name_sold_10`='',`ETF_code_sold_1`='',`ETF_code_sold_2`='',`ETF_code_sold_3`='',`ETF_code_sold_4`='',`ETF_code_sold_5`='',`ETF_code_sold_6`='',`ETF_code_sold_7`='',`ETF_code_sold_8`='',`ETF_code_sold_9`='',`ETF_code_sold_10`='', `ETF_%_sold_1`='',`ETF_%_sold_2`='',`ETF_%_sold_3`='',`ETF_%_sold_4`='',`ETF_%_sold_5`='',`ETF_%_sold_6`='',`ETF_%_sold_7`='',`ETF_%_sold_8`='',`ETF_%_sold_9`='',`ETF_%_sold_10`='' WHERE  `num_portefeuille`='".$portfeuille."'";
+												$update_sld_REq="UPDATE `table4` SET `ETF_name_sold_$count`='',`ETF_code_sold_$count`='',`ETF_%_sold_$count`='' WHERE `num_portefeuille`='".$portfeuille."'";
+												$up_sld_rslt=$wpdb->query($update_sld_REq); 
+												 
+												
+											}	
+										}
+										else if($tab1poid <$tab3poid){ //==>il faut acheter 
+						
+											$sum=0;	$pd='';
+										
+											$re_i="SELECT `ETF_%_sold_1`, `ETF_name_sold_1`, `ETF_%_sold_2`, `ETF_name_sold_2`,`ETF_%_sold_3`, `ETF_name_sold_3`, `ETF_%_sold_4`, `ETF_name_sold_4`,`ETF_%_sold_5`, `ETF_name_sold_5`,`ETF_%_sold_6`, `ETF_name_sold_6`,`ETF_%_sold_7`, `ETF_name_sold_7`,`ETF_%_sold_8`, `ETF_name_sold_8`,`ETF_%_sold_9`, `ETF_name_sold_9`, `ETF_%_sold_10`, `ETF_name_sold_10` FROM `table4` WHERE `num_portefeuille`='".$portfeuille."'";
+											$rsltt=$wpdb-> get_results($re_i);	
+											
+											foreach($rsltt as $r){
+												
+													$tab[0]=$r-> ETF_name_sold_1; 
+													$tab[1]=$r->ETF_name_sold_2;  
+													$tab[2]=$r->ETF_name_sold_3; 
+													$tab[3]=$r->ETF_name_sold_4; 
+													$tab[4]=$r->ETF_name_sold_5;
+													$tab[5]=$r->ETF_name_sold_6;
+													$tab[6]=$r->ETF_name_sold_7; 
+													$tab[7]=$r->ETF_name_sold_8; 
+													$tab[8]=$r->ETF_name_sold_9;
+													$tab[9]=$r->ETF_name_sold_10;												
+													
+													for ($i=0;$i<10;$i++){
+														if($tab[$i] !=''){
+															//echo $tab[$i] .' ffkk </br>';
+																$res_i="SELECT `POIDS` FROM `table1` WHERE `FUND NAME`='".$tab[$i]."' AND `POLICY NUMBER`='".$portfeuille."'";
+																$ress_i="SELECT `POIDS` FROM `table3` WHERE `LIBELLE`='".$tab[$i]."' AND `PROFIL`='".$profil_d_risque."'";
+																$valetf = 'ETF_%_sold_'.($i+1);
+																$valetf = $r -> $valetf;
+																
+																$rslts1=$wpdb-> get_var($res_i);  
+																$rslts2=$wpdb-> get_var($ress_i);
+																if(($rslts2=='')|| ($rslts2<$rslts1)){
+																	$pd=$rslts1;
+																}
+																else if ($rslts2>$rslts1){
+																	$pd=$rslts2;
+																}
+																
+																$sum += ($valetf * $pd) /100;
+														}	
+														
+													}	
+											
+												}
+											
+											//echo $sum.' la somme </br>'; 
+											
+												if($sum>0){
+													$ETF_buy_i = 100*((intval($tab3poid)- intval($tab1poid))/intval($sum));
+													
+														if((intval($tab3poid) - intval($tab1poid))>=5){
+															
+															//$update_buy_REq=" UPDATE `table4` SET `ETF_name_buy_1`='".$etf."',`ETF_name_buy_2`='".$etf."',`ETF_name_buy_3`='".$etf."',`ETF_name_buy_4`='".$etf."',`ETF_name_buy_5`='".$etf."',`ETF_name_buy_6`='".$etf."',`ETF_name_buy_7`='".$etf."',`ETF_name_buy_8`='".$etf."',`ETF_name_buy_9`='".$etf."',`ETF_name_buy_10`='".$etf."',`ETF_code_buy_1`='".$code."',`ETF_code_buy_2`='".$code."',`ETF_code_buy_3`='".$code."',`ETF_code_buy_4`='".$code."',`ETF_code_buy_5`='".$code."',`ETF_code_buy_6`='".$code."',`ETF_code_buy_7`='".$code."',`ETF_code_buy_8`='".$code."',`ETF_code_buy_9`='".$code."',`ETF_code_buy_10`='".$code."',`ETF_%_buy_1`='".$ETF_buy_i."',`ETF_%_buy_2`='".$ETF_buy_i."',`ETF_%_buy_3`='".$ETF_buy_i."',`ETF_%_buy_4`='".$ETF_buy_i."',`ETF_%_buy_5`='".$ETF_buy_i."',`ETF_%_buy_6`='".$ETF_buy_i."',`ETF_%_buy_7`='".$ETF_buy_i."',`ETF_%_buy_8`='".$ETF_buy_i."',`ETF_%_buy_9`='".$ETF_buy_i."',`ETF_%_buy_10`='".$ETF_buy_i."' WHERE  `num_portefeuille`='".$portfeuille."'";
+															$update_buy_REq="UPDATE `table4` SET `ETF_name_buy_$count`='".$etf."',`ETF_code_buy_$count`='".$code."',`ETF_%_buy_$count`='".$ETF_buy_i."' WHERE `num_portefeuille`='".$portfeuille."'";
+															$up_buy_rslt=$wpdb->query($update_buy_REq); 
+															
+															
+														}
+														else{
+																
+															//$update_buy_REq=" UPDATE `table4` SET `ETF_name_buy_1`='',`ETF_name_buy_2`='',`ETF_name_buy_3`='',`ETF_name_buy_4`='',`ETF_name_buy_5`='',`ETF_name_buy_6`='',`ETF_name_buy_7`='',`ETF_name_buy_8`='',`ETF_name_buy_9`='',`ETF_name_buy_10`='',`ETF_code_buy_1`='',`ETF_code_buy_2`='',`ETF_code_buy_3`='',`ETF_code_buy_4`='',`ETF_code_buy_5`='',`ETF_code_buy_6`='',`ETF_code_buy_7`='',`ETF_code_buy_8`='',`ETF_code_buy_9`='',`ETF_code_buy_10`='',`ETF_%_buy_1`='',`ETF_%_buy_2`='',`ETF_%_buy_3`='',`ETF_%_buy_4`='',`ETF_%_buy_5`='',`ETF_%_buy_6`='',`ETF_%_buy_7`='',`ETF_%_buy_8`='',`ETF_%_buy_9`='',`ETF_%_buy_10`='' WHERE  `num_portefeuille`='".$portfeuille."'";
+															$update_buy_REq="UPDATE `table4` SET `ETF_name_buy_$count`='',`ETF_code_buy_$count`='',`ETF_%_buy_$count`='' WHERE `num_portefeuille`='".$portfeuille."'";
+															$up_buy_rslt=$wpdb->query($update_buy_REq); 
+															
+														}
+												}
+												
+											
+										}
+										else{
+										
+											//echo 'rien à faire  '.$etf;
+										}	
+										
+										
+										
+									}
+							}	
+				
+				
+					}
+				
+				/* ********************************************************************************************/
+			    /*			Pour chaque Code ETF de la table 3, vérifier sa présence dans la table 1
+			    /* *********************************************************************************************/	
+					
+							$reqcomp2=" SELECT  `LIBELLE`, `FUND ISIN`, `POIDS` as tab3Poids FROM `table3` WHERE `PROFIL`='".$profil_d_risque."'";
+							
+							$comprslt2= $wpdb->get_results($reqcomp2,OBJECT_K);
+						
+							foreach($comprslt2 as $t){
+								$t=(array)$t;
+								
+								
+									$etf3 =$t['LIBELLE'];
+									$code3=$t['FUND ISIN'];
+									$tab3poids=$t['tab3Poids'];
+									$count++; 
+									
+									$reqqq=" SELECT `POLICY NUMBER`,`FUND NAME`, tab1.`FUND ISIN`, tab1.`POIDS`  FROM `table1` as tab1  WHERE tab1.`POLICY NUMBER`='".$portfeuille."' AND tab1.`FUND NAME`= '". $etf3."'";
+									$compare2= $wpdb->get_results($reqqq);
+									
+											
+												
+								   $summ=0;	$pds='';
+									// autre façon de le faire!	
+											$re_i="SELECT `ETF_%_sold_1`, `ETF_name_sold_1`, `ETF_%_sold_2`, `ETF_name_sold_2`,`ETF_%_sold_3`, `ETF_name_sold_3`, `ETF_%_sold_4`, `ETF_name_sold_4`,`ETF_%_sold_5`, `ETF_name_sold_5`,`ETF_%_sold_6`, `ETF_name_sold_6`,`ETF_%_sold_7`, `ETF_name_sold_7`,`ETF_%_sold_8`, `ETF_name_sold_8`,`ETF_%_sold_9`, `ETF_name_sold_9`, `ETF_%_sold_10`, `ETF_name_sold_10` FROM `table4` WHERE `num_portefeuille`='".$portfeuille."'";
+											$rsltt=$wpdb-> get_results($re_i);	
+											
+											foreach($rsltt as $r){
+												
+												    $tab[0]=$r-> ETF_name_sold_1; 
+													$tab[1]=$r->ETF_name_sold_2;  
+													$tab[2]=$r->ETF_name_sold_3; 
+													$tab[3]=$r->ETF_name_sold_4; 
+													$tab[4]=$r->ETF_name_sold_5;
+													$tab[5]=$r->ETF_name_sold_6;
+													$tab[6]=$r->ETF_name_sold_7; 
+													$tab[7]=$r->ETF_name_sold_8; 
+													$tab[8]=$r->ETF_name_sold_9;
+													$tab[9]=$r->ETF_name_sold_10; 												
+													
+												
+													for ($i=0;$i<10;$i++){
+														if($tab[$i] !=''){
+														
+																$res_i="SELECT `POIDS` FROM `table1` WHERE `FUND NAME`='".$tab[$i]."' AND `POLICY NUMBER`='".$portfeuille."'";
+																$ress_i="SELECT `POIDS` FROM `table3` WHERE `LIBELLE`='".$tab[$i]."' AND `PROFIL`='".$profil_d_risque."'";
+																$valetf = 'ETF_%_sold_'.($i+1);
+																
+																$valetf = $r -> $valetf;
+																 
+																$rslts1=$wpdb-> get_var($res_i);  
+																$rslts2=$wpdb-> get_var($ress_i);
+																if(($rslts2=='')|| ($rslts2<$rslts1)){
+																	$pds=$rslts1;
+																}
+																else if ($rslts2>$rslts1){
+																	$pds=$rslts2;
+																}
+																
+																$summ += ($valetf * $pds) /100;
+														}	
+														
+													}
+													
+												} 
+											
+										
+									if(Count($compare2) ==0){
+										//=> remplir les 3 champs concernant les ETF à acheter avec ETF_%_buy_i  = 100 x [Table3.%_ETF  / (Σ ETF_%_sold_i) ] avec i de 1 à 10.
+												
+															if($summ>0){
+																		$ETF_buy_ie = 100*((intval($tab3poids))/intval($summ));
+																		//echo 	$ETF_buy_ie.' %buy</br>';
+																		//while($count<=10){
+																			//$update_buy_REq=" UPDATE `table 4` SET `ETF_name_buy_1`='".$etf3."',`ETF_name_buy_2`='".$etf3."',`ETF_name_buy_3`='".$etf3."',`ETF_name_buy_4`='".$etf3."',`ETF_name_buy_5`='".$etf3."',`ETF_name_buy_6`='".$etf3."',`ETF_name_buy_7`='".$etf3."',`ETF_name_buy_8`='".$etf3."',`ETF_name_buy_9`='".$etf3."',`ETF_name_buy_10`='".$etf3."',`ETF_code_buy_1`='".$code3."',`ETF_code_buy_2`='".$code3."',`ETF_code_buy_3`='".$code3."',`ETF_code_buy_4`='".$code3."',`ETF_code_buy_5`='".$code3."',`ETF_code_buy_6`='".$code3."',`ETF_code_buy_7`='".$code3."',`ETF_code_buy_8`='".$code3."',`ETF_code_buy_9`='".$code3."',`ETF_code_buy_10`='".$code3."',`ETF_%_buy_1`='".$ETF_buy_ie."',`ETF_%_buy_2`='".$ETF_buy_ie."',`ETF_%_buy_3`='".$ETF_buy_ie."',`ETF_%_buy_4`='".$ETF_buy_ie."',`ETF_%_buy_5`='".$ETF_buy_ie."',`ETF_%_buy_6`='".$ETF_buy_ie."',`ETF_%_buy_7`='".$ETF_buy_ie."',`ETF_%_buy_8`='".$ETF_buy_ie."',`ETF_%_buy_9`='".$ETF_buy_ie."',`ETF_%_buy_10`='".$ETF_buy_ie."' WHERE  `num_portefeuille`='".$portfeuille."'";
+																			$update_buy_REq="UPDATE `table4` SET `ETF_name_buy_$count`='".$etf3."',`ETF_code_buy_$count`='".$code3."',`ETF_%_buy_$count`='".$ETF_buy_ie."' WHERE `num_portefeuille`='".$portfeuille."'";
+																			$up_buy_rslt=$wpdb->query($update_buy_REq); 
+																		
+																		//}	 
+																
+															}
+									}	
+								if($count==10){
+									$count=0;
+									break;
+								}									
+							}
+								
+								
+				
+				}
+		}
+	    fclose($fh);	
+			
+	}
+	
+	
+	
+	else{
+		
+		$results=$wpdb->get_results("SELECT * FROM `table2` ");
+		
+		$count=0;
+		foreach  ($results as $row) {
+				$count++;
+				$portfeuille= $row->NUM_PORTEFEUILLES;
+				$profil_d_risque= $row->PROFIL;
+				$nom= $row->Nom_client;
+				$prenom= $row->Prenom_client;
+				
+			/* ********************************************************************************************/
+			/*			Pour chaque Code ETF de la table 1, vérifier sa présence dans la table 3
+			/* *********************************************************************************************/
+				$reqq=" SELECT `POLICY NUMBER`,`FUND NAME`, tab1.`FUND ISIN`, tab1.`POIDS`  FROM `table1` as tab1  WHERE tab1.`POLICY NUMBER`='".$portfeuille."' ";
+				$compare=$wpdb->get_results($reqq);
+				
+				if(Count($compare) ==0){
+				
+					
+					$insertREq="INSERT INTO `table4`(`num_portefeuille`, `nom_client`, `Prenom_client`, `ETF_name_sold_1`, `ETF_code_sold_1`,  `ETF_%_sold_1`,  `ETF_name_sold_2`, `ETF_code_sold_2`, `ETF_%_sold_2`,  `ETF_name_sold_3`, `ETF_code_sold_3`, `ETF_%_sold_3`,  `ETF_name_sold_4`,  `ETF_code_sold_4`, `ETF_%_sold_4`,  `ETF_name_sold_5`,`ETF_code_sold_5`, `ETF_%_sold_5`,   `ETF_name_sold_6`,  `ETF_code_sold_6`,  `ETF_%_sold_6`,  `ETF_name_sold_7`, `ETF_code_sold_7`, `ETF_%_sold_7`,  `ETF_name_sold_8`, `ETF_code_sold_8`,  `ETF_%_sold_8`, `ETF_name_sold_9`, `ETF_code_sold_9`,  `ETF_%_sold_9`,  `ETF_name_sold_10`, `ETF_code_sold_10`, `ETF_%_sold_10`, `ETF_name_buy_1`, `ETF_code_buy_1`,  `ETF_%_buy_1`,  `ETF_name_buy_2`,  `ETF_code_buy_2`,  `ETF_%_buy_2`,  `ETF_name_buy_3`,  `ETF_code_buy_3`,  `ETF_%_buy_3`, `ETF_name_buy_4`,  `ETF_code_buy_4`,  `ETF_%_buy_4`,  `ETF_name_buy_5`,  `ETF_code_buy_5`, `ETF_%_buy_5`,   `ETF_name_buy_6`,  `ETF_code_buy_6`, `ETF_%_buy_6`,  `ETF_name_buy_7`,  `ETF_code_buy_7`,  `ETF_%_buy_7`,  `ETF_name_buy_8`,  `ETF_code_buy_8`,  `ETF_%_buy_8`,  `ETF_name_buy_9`,  `ETF_code_buy_9`,  `ETF_%_buy_9`, `ETF_name_buy_10`, `ETF_code_buy_10`, `ETF_%_buy_10`, `jour`, `mois`, `annee`) VALUES ('".$portfeuille."','".$nom."','".$prenom."','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','$day','$mounth','$year')"; 
+
+					 $tmp_result = $wpdb->query($insertREq); 
+					
+				
+						fwrite($fh, '  - Anomalie : client '.$nom.' introuvable dans fichier client. '.PHP_EOL);
+						fwrite($fh, ' 																			 '.PHP_EOL); 
+						fwrite($fh, '  - Anomalie : Profil 5 du client '.$nom.' introuvable dans le fichier Portefeuilles Modèles. '.PHP_EOL);
+						fwrite($fh, ' 																			 '.PHP_EOL); 
+				}
+				else{
+					
+			
+					
+					  $insertREq="INSERT INTO `table4`(`num_portefeuille`, `nom_client`, `Prenom_client`, `ETF_name_sold_1`, `ETF_code_sold_1`,  `ETF_%_sold_1`,  `ETF_name_sold_2`, `ETF_code_sold_2`, `ETF_%_sold_2`,  `ETF_name_sold_3`, `ETF_code_sold_3`, `ETF_%_sold_3`,  `ETF_name_sold_4`,  `ETF_code_sold_4`, `ETF_%_sold_4`,  `ETF_name_sold_5`,`ETF_code_sold_5`, `ETF_%_sold_5`,   `ETF_name_sold_6`,  `ETF_code_sold_6`,  `ETF_%_sold_6`,  `ETF_name_sold_7`, `ETF_code_sold_7`, `ETF_%_sold_7`,  `ETF_name_sold_8`, `ETF_code_sold_8`,  `ETF_%_sold_8`, `ETF_name_sold_9`, `ETF_code_sold_9`,  `ETF_%_sold_9`,  `ETF_name_sold_10`, `ETF_code_sold_10`, `ETF_%_sold_10`, `ETF_name_buy_1`, `ETF_code_buy_1`,  `ETF_%_buy_1`,  `ETF_name_buy_2`,  `ETF_code_buy_2`,  `ETF_%_buy_2`,  `ETF_name_buy_3`,  `ETF_code_buy_3`,  `ETF_%_buy_3`, `ETF_name_buy_4`,  `ETF_code_buy_4`,  `ETF_%_buy_4`,  `ETF_name_buy_5`,  `ETF_code_buy_5`, `ETF_%_buy_5`,   `ETF_name_buy_6`,  `ETF_code_buy_6`, `ETF_%_buy_6`,  `ETF_name_buy_7`,  `ETF_code_buy_7`,  `ETF_%_buy_7`,  `ETF_name_buy_8`,  `ETF_code_buy_8`,  `ETF_%_buy_8`,  `ETF_name_buy_9`,  `ETF_code_buy_9`,  `ETF_%_buy_9`, `ETF_name_buy_10`, `ETF_code_buy_10`, `ETF_%_buy_10`, `jour`, `mois`, `annee`) VALUES ('".$portfeuille."','".$nom."','".$prenom."','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','$day','$mounth','$year')";
+					  $tmp_result = $wpdb->query($insertREq); 
+					
+					
+					 fwrite($fh, '  - Client '.$nom.'  traité. '.PHP_EOL); 
+					 fwrite($fh, ' 																			 '.PHP_EOL); 
+					 
+					
+					foreach  ($compare as $col) {
+						$col=(array)$col;
+						$etf= $col['FUND NAME'];
+						$code=$col['FUND ISIN'];
+						$tab1poid= $col['POIDS']; 
+						$count++;
+						
+						$reqcomp=" SELECT  `PROFIL`, `LIBELLE`, tab3.`FUND ISIN` as tab3ISIN, tab3.`POIDS` as tab3Poids  FROM `table3` as tab3  WHERE tab3.`LIBELLE` ='".$etf."' AND tab3.`PROFIL` ='".$profil_d_risque."' ";
+						
+						$comprslt=$wpdb->get_results($reqcomp);
+						 
+						 
+						 if( Count($comprslt) ==0){
+							
+							//etf not exist on table 3
+							//$update_buy_name_REq="UPDATE `table4` SET `ETF_name_sold_1`='".$etf."',`ETF_name_sold_2`='".$etf."',`ETF_name_sold_3`='".$etf."',`ETF_name_sold_4`='".$etf."',`ETF_name_sold_5`='".$etf."',`ETF_name_sold_6`='".$etf."',`ETF_name_sold_7`='".$etf."',`ETF_name_sold_8`='".$etf."',`ETF_name_sold_9`='".$etf."',`ETF_name_sold_10`='".$etf."',`ETF_code_sold_1`='".$code."',`ETF_code_sold_2`='".$code."',`ETF_code_sold_3`='".$code."',`ETF_code_sold_4`='".$code."',`ETF_code_sold_5`='".$code."',`ETF_code_sold_6`='".$code."',`ETF_code_sold_7`='".$code."',`ETF_code_sold_8`='".$code."',`ETF_code_sold_9`='".$code."',`ETF_code_sold_10`='".$code."',`ETF_%_sold_1`='100',`ETF_%_sold_2`='100',`ETF_%_sold_3`='100',`ETF_%_sold_4`='100',`ETF_%_sold_5`='100',`ETF_%_sold_6`='100',`ETF_%_sold_7`='100',`ETF_%_sold_8`='100',`ETF_%_sold_9`='100',`ETF_%_sold_10`='100'  WHERE `num_portefeuille`='".$portfeuille."'";
+						    $update_buy_name_REq="UPDATE `table4` SET `ETF_name_sold_$count`='".$etf."',`ETF_code_sold_$count`='".$code."',`ETF_%_sold_$count`='100' WHERE `num_portefeuille`='".$portfeuille."'";
+							$uprslt=$wpdb->query($update_buy_name_REq); 
+						
+					
+							} 
+							else{
+									foreach  ($comprslt as $rslt) {
+										
+										$tab3poid=$rslt->tab3Poids;
+									
+										if($tab1poid >$tab3poid){
+											$ETF_sold_i =100*(1-(intval($tab3poid)/intval($tab1poid))); 
+											if($ETF_sold_i>=20)
+											{// il faut vendre 
+												// remplir les champs ETF_%_sold_i
+												//$update_sld_REq=" UPDATE `table4` SET `ETF_name_sold_1`='".$etf."',`ETF_name_sold_2`='".$etf."',`ETF_name_sold_3`='".$etf."',`ETF_name_sold_4`='".$etf."',`ETF_name_sold_5`='".$etf."',`ETF_name_sold_6`='".$etf."',`ETF_name_sold_7`='".$etf."',`ETF_name_sold_8`='".$etf."',`ETF_name_sold_9`='".$etf."',`ETF_name_sold_10`='".$etf."',`ETF_code_sold_1`='".$code."',`ETF_code_sold_2`='".$code."',`ETF_code_sold_3`='".$code."',`ETF_code_sold_4`='".$code."',`ETF_code_sold_5`='".$code."',`ETF_code_sold_6`='".$code."',`ETF_code_sold_7`='".$code."',`ETF_code_sold_8`='".$code."',`ETF_code_sold_9`='".$code."',`ETF_code_sold_10`='".$code."', `ETF_%_sold_1`='".$ETF_sold_i."',`ETF_%_sold_2`='".$ETF_sold_i."',`ETF_%_sold_3`='".$ETF_sold_i."',`ETF_%_sold_4`='".$ETF_sold_i."',`ETF_%_sold_5`='".$ETF_sold_i."',`ETF_%_sold_6`='".$ETF_sold_i."',`ETF_%_sold_7`='".$ETF_sold_i."',`ETF_%_sold_8`='".$ETF_sold_i."',`ETF_%_sold_9`='".$ETF_sold_i."',`ETF_%_sold_10`='".$ETF_sold_i."' WHERE  `num_portefeuille`='".$portfeuille."'";
+												$update_sld_REq="UPDATE `table4` SET `ETF_name_sold_$count`='".$etf."',`ETF_code_sold_$count`='".$code."',`ETF_%_sold_$count`='".$ETF_sold_i."' WHERE `num_portefeuille`='".$portfeuille."'";
+												$up_sld_rslt=$wpdb->query($update_sld_REq); 
+												
+											}
+											else{
+												
+												//$update_sld_REq=" UPDATE `table4` SET `ETF_name_sold_1`='',`ETF_name_sold_2`='',`ETF_name_sold_3`='',`ETF_name_sold_4`='',`ETF_name_sold_5`='',`ETF_name_sold_6`='',`ETF_name_sold_7`='',`ETF_name_sold_8`='',`ETF_name_sold_9`='',`ETF_name_sold_10`='',`ETF_code_sold_1`='',`ETF_code_sold_2`='',`ETF_code_sold_3`='',`ETF_code_sold_4`='',`ETF_code_sold_5`='',`ETF_code_sold_6`='',`ETF_code_sold_7`='',`ETF_code_sold_8`='',`ETF_code_sold_9`='',`ETF_code_sold_10`='', `ETF_%_sold_1`='',`ETF_%_sold_2`='',`ETF_%_sold_3`='',`ETF_%_sold_4`='',`ETF_%_sold_5`='',`ETF_%_sold_6`='',`ETF_%_sold_7`='',`ETF_%_sold_8`='',`ETF_%_sold_9`='',`ETF_%_sold_10`='' WHERE  `num_portefeuille`='".$portfeuille."'";
+												$update_sld_REq="UPDATE `table4` SET `ETF_name_sold_$count`='',`ETF_code_sold_$count`='',`ETF_%_sold_$count`='' WHERE `num_portefeuille`='".$portfeuille."'";
+												$up_sld_rslt=$wpdb->query($update_sld_REq); 
+												
+												
+											}	
+										}
+										else if($tab1poid <$tab3poid){ //==>il faut acheter 
+												
+											$sum=0;	$pd='';
+										
+											$re_i="SELECT `ETF_%_sold_1`, `ETF_name_sold_1`, `ETF_%_sold_2`, `ETF_name_sold_2`,`ETF_%_sold_3`, `ETF_name_sold_3`, `ETF_%_sold_4`, `ETF_name_sold_4`,`ETF_%_sold_5`, `ETF_name_sold_5`,`ETF_%_sold_6`, `ETF_name_sold_6`,`ETF_%_sold_7`, `ETF_name_sold_7`,`ETF_%_sold_8`, `ETF_name_sold_8`,`ETF_%_sold_9`, `ETF_name_sold_9`, `ETF_%_sold_10`, `ETF_name_sold_10` FROM `table4` WHERE `num_portefeuille`='".$portfeuille."'";
+											$rsltt=$wpdb-> get_results($re_i);	
+											
+											foreach($rsltt as $r){
+												
+													$tab[0]=$r-> ETF_name_sold_1; 
+													$tab[1]=$r->ETF_name_sold_2;  
+													$tab[2]=$r->ETF_name_sold_3; 
+													$tab[3]=$r->ETF_name_sold_4; 
+													$tab[4]=$r->ETF_name_sold_5;
+													$tab[5]=$r->ETF_name_sold_6;
+													$tab[6]=$r->ETF_name_sold_7; 
+													$tab[7]=$r->ETF_name_sold_8; 
+													$tab[8]=$r->ETF_name_sold_9;
+													$tab[9]=$r->ETF_name_sold_10;												
+													
+													for ($i=0;$i<10;$i++){
+														if($tab[$i] !=''){
+															//echo $tab[$i] .' ffkk </br>';
+																$res_i="SELECT `POIDS` FROM `table1` WHERE `FUND NAME`='".$tab[$i]."' AND `POLICY NUMBER`='".$portfeuille."'";
+																$ress_i="SELECT `POIDS` FROM `table3` WHERE `LIBELLE`='".$tab[$i]."' AND `PROFIL`='".$profil_d_risque."'";
+																$valetf = 'ETF_%_sold_'.($i+1);
+																$valetf = $r -> $valetf;
+																
+																$rslts1=$wpdb-> get_var($res_i);  
+																$rslts2=$wpdb-> get_var($ress_i);
+																if(($rslts2=='')|| ($rslts2<$rslts1)){
+																	$pd=$rslts1;
+																}
+																else if ($rslts2>$rslts1){
+																	$pd=$rslts2;
+																}
+																
+																$sum += ($valetf * $pd) /100;
+														}	
+														
+													}	
+											
+												}
+											
+											//echo $sum.' la somme </br>'; 
+												if($sum>0){
+													$ETF_buy_i = 100*((intval($tab3poid)- intval($tab1poid))/intval($sum));
+													
+														if((intval($tab3poid) - intval($tab1poid))>=5){
+															
+															//$update_buy_REq=" UPDATE `table4` SET `ETF_name_buy_1`='".$etf."',`ETF_name_buy_2`='".$etf."',`ETF_name_buy_3`='".$etf."',`ETF_name_buy_4`='".$etf."',`ETF_name_buy_5`='".$etf."',`ETF_name_buy_6`='".$etf."',`ETF_name_buy_7`='".$etf."',`ETF_name_buy_8`='".$etf."',`ETF_name_buy_9`='".$etf."',`ETF_name_buy_10`='".$etf."',`ETF_code_buy_1`='".$code."',`ETF_code_buy_2`='".$code."',`ETF_code_buy_3`='".$code."',`ETF_code_buy_4`='".$code."',`ETF_code_buy_5`='".$code."',`ETF_code_buy_6`='".$code."',`ETF_code_buy_7`='".$code."',`ETF_code_buy_8`='".$code."',`ETF_code_buy_9`='".$code."',`ETF_code_buy_10`='".$code."',`ETF_%_buy_1`='".$ETF_buy_i."',`ETF_%_buy_2`='".$ETF_buy_i."',`ETF_%_buy_3`='".$ETF_buy_i."',`ETF_%_buy_4`='".$ETF_buy_i."',`ETF_%_buy_5`='".$ETF_buy_i."',`ETF_%_buy_6`='".$ETF_buy_i."',`ETF_%_buy_7`='".$ETF_buy_i."',`ETF_%_buy_8`='".$ETF_buy_i."',`ETF_%_buy_9`='".$ETF_buy_i."',`ETF_%_buy_10`='".$ETF_buy_i."' WHERE  `num_portefeuille`='".$portfeuille."'";
+															$update_buy_REq="UPDATE `table4` SET `ETF_name_buy_$count`='".$etf."',`ETF_code_buy_$count`='".$code."',`ETF_%_buy_$count`='".$ETF_buy_i."' WHERE `num_portefeuille`='".$portfeuille."'";
+															$up_buy_rslt=$wpdb->query($update_buy_REq); 
+															
+															
+														}
+														else{
+																
+															//$update_buy_REq=" UPDATE `table4` SET `ETF_name_buy_1`='',`ETF_name_buy_2`='',`ETF_name_buy_3`='',`ETF_name_buy_4`='',`ETF_name_buy_5`='',`ETF_name_buy_6`='',`ETF_name_buy_7`='',`ETF_name_buy_8`='',`ETF_name_buy_9`='',`ETF_name_buy_10`='',`ETF_code_buy_1`='',`ETF_code_buy_2`='',`ETF_code_buy_3`='',`ETF_code_buy_4`='',`ETF_code_buy_5`='',`ETF_code_buy_6`='',`ETF_code_buy_7`='',`ETF_code_buy_8`='',`ETF_code_buy_9`='',`ETF_code_buy_10`='',`ETF_%_buy_1`='',`ETF_%_buy_2`='',`ETF_%_buy_3`='',`ETF_%_buy_4`='',`ETF_%_buy_5`='',`ETF_%_buy_6`='',`ETF_%_buy_7`='',`ETF_%_buy_8`='',`ETF_%_buy_9`='',`ETF_%_buy_10`='' WHERE  `num_portefeuille`='".$portfeuille."'";
+															$update_buy_REq="UPDATE `table4` SET `ETF_name_buy_$count`='',`ETF_code_buy_$count`='',`ETF_%_buy_$count`='' WHERE `num_portefeuille`='".$portfeuille."'";
+															$up_buy_rslt=$wpdb->query($update_buy_REq); 
+															
+														}
+												}
+												
+												
+											
+										}
+										
+										
+										
+										
+									}
+							}	
+				
+				
+					}
+				
+				/* ********************************************************************************************/
+			    /*			Pour chaque Code ETF de la table 3, vérifier sa présence dans la table 1
+			    /* *********************************************************************************************/	
+					
+							$reqcomp2=" SELECT  `LIBELLE`, `FUND ISIN`, `POIDS` as tab3Poids FROM `table3` ";
+									
+							$comprslt2= $wpdb->get_results($reqcomp2);
+							
+							foreach($comprslt2 as $t){
+								$t=(array)$t;
+								
+								
+									$etf3 =$t['LIBELLE'];
+									$code3=$t['FUND ISIN'];
+									$tab3poids=$t['tab3Poids'];
+									$count++; 
+									
+									$reqqq=" SELECT `POLICY NUMBER`,`FUND NAME`, tab1.`FUND ISIN`, tab1.`POIDS`  FROM `table1` as tab1  WHERE tab1.`POLICY NUMBER`='".$portfeuille."' AND tab1.`FUND NAME`= '". $etf3."'";
+									$compare2= $wpdb->get_results($reqqq);
+									if(Count($compare2) ==0){
+										//=> remplir les 3 champs concernant les ETF à acheter avec ETF_%_buy_i  = 100 x [Table3.%_ETF  / (Σ ETF_%_sold_i) ] avec i de 1 à 10.
+										$summ=0;	$pds='';
+									// autre façon de le faire!	
+											$re_i="SELECT `ETF_%_sold_1`, `ETF_name_sold_1`, `ETF_%_sold_2`, `ETF_name_sold_2`,`ETF_%_sold_3`, `ETF_name_sold_3`, `ETF_%_sold_4`, `ETF_name_sold_4`,`ETF_%_sold_5`, `ETF_name_sold_5`,`ETF_%_sold_6`, `ETF_name_sold_6`,`ETF_%_sold_7`, `ETF_name_sold_7`,`ETF_%_sold_8`, `ETF_name_sold_8`,`ETF_%_sold_9`, `ETF_name_sold_9`, `ETF_%_sold_10`, `ETF_name_sold_10` FROM `table4` WHERE `num_portefeuille`='".$portfeuille."'";
+											$rsltt=$wpdb-> get_results($re_i);	
+											
+											foreach($rsltt as $r){
+												
+												    $tab[0]=$r-> ETF_name_sold_1; 
+													$tab[1]=$r->ETF_name_sold_2;  
+													$tab[2]=$r->ETF_name_sold_3; 
+													$tab[3]=$r->ETF_name_sold_4; 
+													$tab[4]=$r->ETF_name_sold_5;
+													$tab[5]=$r->ETF_name_sold_6;
+													$tab[6]=$r->ETF_name_sold_7; 
+													$tab[7]=$r->ETF_name_sold_8; 
+													$tab[8]=$r->ETF_name_sold_9;
+													$tab[9]=$r->ETF_name_sold_10; 												
+													
+												
+													for ($i=0;$i<10;$i++){
+														if($tab[$i] !=''){
+														
+																$res_i="SELECT `POIDS` FROM `table1` WHERE `FUND NAME`='".$tab[$i]."' AND `POLICY NUMBER`='".$portfeuille."'";
+																$ress_i="SELECT `POIDS` FROM `table3` WHERE `LIBELLE`='".$tab[$i]."' AND `PROFIL`='".$profil_d_risque."'";
+																$valetf = 'ETF_%_sold_'.($i+1);
+																
+																$valetf = $r -> $valetf;
+																 
+																$rslts1=$wpdb-> get_var($res_i);  
+																$rslts2=$wpdb-> get_var($ress_i);
+																if(($rslts2=='')|| ($rslts2<$rslts1)){
+																	$pds=$rslts1;
+																}
+																else if ($rslts2>$rslts1){
+																	$pds=$rslts2;
+																}
+																
+																$summ += ($valetf * $pds) /100;
+														}	
+														
+													}
+													
+												} 
+											
+														
+															if($summ>0){
+																		$ETF_buy_ie = 100*((intval($tab3poids))/intval($summ));
+																		//$update_buy_REq=" UPDATE `table 4` SET `ETF_name_buy_1`='".$etf3."',`ETF_name_buy_2`='".$etf3."',`ETF_name_buy_3`='".$etf3."',`ETF_name_buy_4`='".$etf3."',`ETF_name_buy_5`='".$etf3."',`ETF_name_buy_6`='".$etf3."',`ETF_name_buy_7`='".$etf3."',`ETF_name_buy_8`='".$etf3."',`ETF_name_buy_9`='".$etf3."',`ETF_name_buy_10`='".$etf3."',`ETF_code_buy_1`='".$code3."',`ETF_code_buy_2`='".$code3."',`ETF_code_buy_3`='".$code3."',`ETF_code_buy_4`='".$code3."',`ETF_code_buy_5`='".$code3."',`ETF_code_buy_6`='".$code3."',`ETF_code_buy_7`='".$code3."',`ETF_code_buy_8`='".$code3."',`ETF_code_buy_9`='".$code3."',`ETF_code_buy_10`='".$code3."',`ETF_%_buy_1`='".$ETF_buy_ie."',`ETF_%_buy_2`='".$ETF_buy_ie."',`ETF_%_buy_3`='".$ETF_buy_ie."',`ETF_%_buy_4`='".$ETF_buy_ie."',`ETF_%_buy_5`='".$ETF_buy_ie."',`ETF_%_buy_6`='".$ETF_buy_ie."',`ETF_%_buy_7`='".$ETF_buy_ie."',`ETF_%_buy_8`='".$ETF_buy_ie."',`ETF_%_buy_9`='".$ETF_buy_ie."',`ETF_%_buy_10`='".$ETF_buy_ie."' WHERE  `num_portefeuille`='".$portfeuille."'";
+																		//$up_buy_rslt=$wpdb->query($update_buy_REq); 
+																		//while($count<=10){
+																			//$update_buy_REq=" UPDATE `table 4` SET `ETF_name_buy_1`='".$etf3."',`ETF_name_buy_2`='".$etf3."',`ETF_name_buy_3`='".$etf3."',`ETF_name_buy_4`='".$etf3."',`ETF_name_buy_5`='".$etf3."',`ETF_name_buy_6`='".$etf3."',`ETF_name_buy_7`='".$etf3."',`ETF_name_buy_8`='".$etf3."',`ETF_name_buy_9`='".$etf3."',`ETF_name_buy_10`='".$etf3."',`ETF_code_buy_1`='".$code3."',`ETF_code_buy_2`='".$code3."',`ETF_code_buy_3`='".$code3."',`ETF_code_buy_4`='".$code3."',`ETF_code_buy_5`='".$code3."',`ETF_code_buy_6`='".$code3."',`ETF_code_buy_7`='".$code3."',`ETF_code_buy_8`='".$code3."',`ETF_code_buy_9`='".$code3."',`ETF_code_buy_10`='".$code3."',`ETF_%_buy_1`='".$ETF_buy_ie."',`ETF_%_buy_2`='".$ETF_buy_ie."',`ETF_%_buy_3`='".$ETF_buy_ie."',`ETF_%_buy_4`='".$ETF_buy_ie."',`ETF_%_buy_5`='".$ETF_buy_ie."',`ETF_%_buy_6`='".$ETF_buy_ie."',`ETF_%_buy_7`='".$ETF_buy_ie."',`ETF_%_buy_8`='".$ETF_buy_ie."',`ETF_%_buy_9`='".$ETF_buy_ie."',`ETF_%_buy_10`='".$ETF_buy_ie."' WHERE  `num_portefeuille`='".$portfeuille."'";
+																			$update_buy_REq="UPDATE `table4` SET `ETF_name_buy_$count`='".$etf3."',`ETF_code_buy_$count`='".$code3."',`ETF_%_buy_$count`='".$ETF_buy_ie."' WHERE `num_portefeuille`='".$portfeuille."'";
+																			$up_buy_rslt=$wpdb->query($update_buy_REq); 
+																		
+																		//}
+																	
+															}
+															if($count==10){
+																$count=0;
+																break;
+															}
+									}	
+									
+							}	
+								
+								
+				
+				}
+		}
+
+	fclose($fh);
+	
+	}	
+			
+				
+
+
+		
+	/* ************************************************************************************************************************************/
+	/*															Télechargement du fichier csv resultant 
+	/* ************************************************************************************************************************************/
+
+	  $data = fopen('php://output', 'w');
+	
+	
+	
+				// get table 4 columns's name		
+				//$q = $wpdb->query("DESCRIBE `table 4`");
+				
+				//$table_fields = $q->fetchAll(PDO::FETCH_COLUMN);	
+ 
+				  //fputcsv($data, $table_fields);
+				  $MyQuery = $wpdb->get_results("SELECT * FROM  `table4`");
+				  $first = true;
+				foreach ($MyQuery as $Result) {
+					
+					  // Add table headers
+					  if($first){
+						 $titles = array();
+						 foreach($Result as $key=>$val){
+							$titles[] = $key;
+						 }
+						 fputcsv($data, $titles);
+						 $first = false;
+					  }
+						$leadArray = (array) $Result; // Cast the Object to an array
+						// Add row to file
+						fputcsv( $data, $leadArray );
+				}
+
+                fclose($data);
+
+		
+
+
+
+
+
+?>    
